@@ -3,15 +3,16 @@ import Movie from './Movie.js';
 
 function MovieList(props) {
     const { movies = [] } = props;
+    const unique = Array.from(new Map(movies.map(m=>[m.imdbID, m])).values());
     return (
         <div className='movies'>
             {
-                movies.map
+                unique.length ? unique.map
                     (
                         movie => {
                             return <Movie key={movie.imdbID} {...movie} />
                         }
-                )
+                ) : <h4>Nothing Found</h4>
             }
         </div>
     );
