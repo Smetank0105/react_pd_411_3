@@ -49,10 +49,12 @@ class Search extends React.Component {
     render() {
         let limit = 10;
         let totalPages = Math.ceil(this.props.totalCount / limit);
-        const lastIndex = totalPages <= 10 ? totalPages + 1 : this.state.page + limit;
-        const firstIndex = totalPages <= 10 ? lastIndex - limit + lastIndex + 1 : lastIndex - limit;
+        const lastIndex = totalPages <= limit 
+            ? totalPages + 1 : this.state.page >= totalPages - limit 
+                ? totalPages + 1 : this.state.page + limit;
+        const firstIndex = totalPages <= limit ? 1 : lastIndex - limit;
         let num = [];
-        for (let i = 0; i < totalPages; i++) {
+        for (let i = 1; i <= totalPages; i++) {
             num.push(i);
         }
         return (
@@ -89,7 +91,7 @@ class Search extends React.Component {
                     <button className='btn' onClick={this.prevPage}>Prev</button>
                     <div className='items'>
                         {
-                            num.slice(firstIndex, lastIndex)
+                            num.slice(firstIndex - 1, lastIndex)
                                 .map(
                                     (element, index) => {
                                         return <button
