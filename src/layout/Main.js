@@ -21,9 +21,9 @@ class Main extends React.Component
 
     searchMovie = (str, type='all', page=1) =>
     {
-        fetch(`https://omdbapi.com/?apikey=1430ab10&s=${str}${type != 'all' ? `&type=${type}` : ''}${`&page=${page}`}`)
+        fetch(`https://omdbapi.com/?apikey=1430ab10&s=${str}${type !== 'all' ? `&type=${type}` : ''}${`&page=${page}`}`)
         .then(response => response.json())
-        .then(data => this.setState({movies: data.Search}));
+        .then(data => this.setState({movies: data.Search, count: data.totalResults}));
     }
 
     render()
