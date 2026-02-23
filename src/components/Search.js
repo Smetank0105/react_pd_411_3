@@ -1,111 +1,172 @@
 import './Search.css';
-import React from 'react';
+import React from "react";
 
 class Search extends React.Component {
     state =
         {
-            search: '',
-            type: 'all',
-            page: 1
+            search: "",
+            type: "all",
+            page: 1,
+            paginationLimit: 5
         }
 
+    executeSearch = (newPage = this.state.page) => {
+        this.setState({ page: newPage }, () => {
+            this.props.searchMovie(this.state.search, this.state.type, this.state.page);
+        });
+    }
     prevPage = () => {
-        this.setState
-            (
-                () => (this.state.page > 1 ? { page: this.state.page - 1 } : { page: 1 }),
-                () => this.props.searchMovie(this.state.search, this.state.type, this.state.page)
-            )
-    }
+        if (this.state.page > 1) {
+            this.executeSearch(this.state.page - 1);
+        }
 
+    }
     nextPage = () => {
-        this.setState
-            (
-                () => ({ page: this.state.page + 1 }),
-                () => (this.props.searchMovie(this.state.search, this.state.type, this.state.page))
-            )
-    }
+        const { totalCount } = this.props;
+        const { page, paginationLimit } = this.state;
+        const limit = 10;
 
-    setPage = (num) => {
-        this.setState
-            (
-                () => ({ page: num }),
-                () => (this.props.searchMovie(this.state.search, this.state.type, this.state.page))
-            )
-    }
+        const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
 
-    handleKey = (e) => {
-        if (e.key === 'Enter') {
-            this.props.searchMovie(this.state.search, this.state.type);
+        if (this.state.page < totalPages) {
+            this.executeSearch(this.state.page + 1);
         }
     }
-
+    handleKey = (event) => {
+        if (event.key === 'Enter') {
+            this.setState({ page: 1 }, () => {
+                this.props.searchMovie(this.state.search, this.state.type, 1);
+            });
+        }
+    }
     handleFilter = (event) => {
-        this.setState(
-            () => ({ type: event.target.dataset.type }),
-            () => this.props.searchMovie(this.state.search, this.state.type)
+        this.setState
+            (
+                () => ({ type: event.target.dataset.type, page: 1 }),
+                () => this.props.searchMovie(this.state.search, this.state.type, 1)
+            );
+    }
+    handlePageClick = (pageNumber) => {
+        if (pageNumber !== this.state.page) {
+            this.executeSearch(pageNumber);
+        }
+    }
+    renderPaginationNumbers() {
+        const { totalCount } = this.props;
+        const { page, paginationLimit } = this.state;
+        const limit = 10;
+
+        if (totalCount === 0) return null;
+
+        const totalPages = Math.ceil(totalCount / limit);
+        if (totalPages <= 1) return null;
+
+        let startPage = Math.max(1, page - Math.floor(paginationLimit / 2));
+        let endPage = Math.min(totalPages, startPage + paginationLimit - 1);
+
+        if (endPage - startPage + 1 < paginationLimit && totalPages >= paginationLimit) {
+            startPage = Math.max(1, endPage - paginationLimit + 1);
+        }
+
+        const pages = [];
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+
+        return (
+            <>
+                {startPage > 1 && (
+                    <>
+                        <button className='btn page-num' onClick={() => this.handlePageClick(1)}>1</button>
+                        {startPage > 2 && <span className='dots'>...</span>}
+                    </>
+                )}
+
+                {pages.map(num => (
+                    <button
+                        key={num}
+                        className={`btn page-num ${this.state.page === num ? 'active' : ''}`}
+                        onClick={() => this.handlePageClick(num)}
+                    >
+                        {num}
+                    </button>
+                ))}
+
+                {endPage < totalPages && (
+                    <>
+                        {endPage < totalPages - 1 && <span className='dots'>...</span>}
+                        <button className='btn page-num' onClick={() => this.handlePageClick(totalPages)}>{totalPages}</button>
+                    </>
+                )}
+            </>
         );
     }
-
     render() {
-        let limit = 10;
-        let totalPages = Math.ceil(this.props.totalCount / limit);
-        const lastIndex = totalPages <= limit 
-            ? totalPages + 1 : this.state.page >= totalPages - limit 
-                ? totalPages + 1 : this.state.page + limit;
-        const firstIndex = totalPages <= limit ? 1 : lastIndex - limit;
-        let num = [];
-        for (let i = 1; i <= totalPages; i++) {
-            num.push(i);
-        }
+        const { page } = this.state;
+        const { totalCount } = this.props;
+        const limit = 10;
+        const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
+
         return (
             <>
                 <div className='search'>
-                    <input type="search"
-                        placeholder='Поиск'
+                    <input
+                        type="search"
+                        placeholder="Поиск"
                         value={this.state.search}
                         onChange={(e) => this.setState({ search: e.target.value })}
-                        onKeyDown={this.handleKey} />
-                    <button className='btn' onClick={() => this.props.searchMovie(this.state.search, this.state.type)}>
+                        onKeyDown={this.handleKey}
+                    />
+                    <button className='btn' onClick={() => this.props.searchMovie(this.state.search, this.state.type, 1)}>
                         Search
                     </button>
                 </div>
                 <div className='radio'>
                     <div>
-                        <input type="radio" name='type' id='all' data-type='all' checked={this.state.type === 'all'} onChange={this.handleFilter} />
-                        <label htmlFor='all'>All</label>
+                        <input type='radio' name='type' id="all" data-type="all" checked={this.state.type === 'all'} onChange={this.handleFilter} />
+                        <label htmlFor="all">All</label>
                     </div>
                     <div>
-                        <input type="radio" name='type' id='movie' data-type='movie' checked={this.state.type === 'movie'} onChange={this.handleFilter} />
-                        <label htmlFor='movie'>Movie</label>
+                        <input type='radio' name='type' id="movie" data-type="movie" checked={this.state.type === 'movie'} onChange={this.handleFilter} />
+                        <label htmlFor="movie">Movie</label>
                     </div>
                     <div>
-                        <input type="radio" name='type' id='series' data-type='series' checked={this.state.type === 'series'} onChange={this.handleFilter} />
-                        <label htmlFor='series'>Series</label>
+                        <input type='radio' name='type' id="series" data-type="series" checked={this.state.type === 'series'} onChange={this.handleFilter} />
+                        <label htmlFor="series">Series</label>
                     </div>
                     <div>
-                        <input type="radio" name='type' id='game' data-type='game' checked={this.state.type === 'game'} onChange={this.handleFilter} />
-                        <label htmlFor='game'>Game</label>
+                        <input type='radio' name='type' id="game" data-type="game" checked={this.state.type === 'game'} onChange={this.handleFilter} />
+                        <label htmlFor="game">Game</label>
                     </div>
                 </div>
-                <div className='navigator'>
-                    <button className='btn' onClick={this.prevPage}>Prev</button>
-                    <div className='items'>
-                        {
-                            num.slice(firstIndex - 1, lastIndex)
-                                .map(
-                                    (element, index) => {
-                                        return <button
-                                            className='btn'
-                                            style={{ background: this.state.page != element ? 'gray' : '' }}
-                                            key={index}
-                                            onClick={() => (this.setPage(element))}
-                                        >{element}</button>
-                                    }
-                                )
-                        }
+
+                {(totalCount > 10) && (
+                    <div className='navigator'>
+                        <button
+                            className='btn'
+                            onClick={this.prevPage}
+                            disabled={page === 1}
+                        >
+                            Prev
+                        </button>
+
+                        {this.renderPaginationNumbers()}
+
+                        <button
+                            className='btn'
+                            onClick={this.nextPage}
+                            disabled={page === totalPages}
+                        >
+                            Next
+                        </button>
                     </div>
-                    <button className='btn' onClick={this.nextPage}>Next</button>
-                </div>
+                )}
+
+                {(totalCount > 10) && (
+                    <p className="current-page-info">
+                        Page {page} from {totalPages}
+                    </p>
+                )}
             </>
         )
     }
